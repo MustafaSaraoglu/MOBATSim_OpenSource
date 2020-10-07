@@ -1,5 +1,4 @@
-
-classdef Map < handle
+classdef GridMapPed < handle
     %UNTITLED Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -9,21 +8,17 @@ classdef Map < handle
         connections
         direct_graph
         digraph_visualization
-        digraph_visualization2
         Vehicles
         plots
         crossroadUnits
         crossroads
-%         occMap
-        MapFig    
- 
-        map2
-        map3 
-        fig2
+        MapFig
+        occMap
+        occFig
     end
     
     methods
-        function obj = Map(mapName,waypoints, connections_circle,connections_translation, startingNodes, breakingNodes, stoppingNodes, leavingNodes)
+        function obj = GridMapPed(mapName,waypoints, connections_circle,connections_translation, startingNodes, breakingNodes, stoppingNodes, leavingNodes)
             obj.mapName = mapName;
             obj.waypoints = waypoints;
             obj.Vehicles = [];
@@ -55,74 +50,63 @@ classdef Map < handle
             obj.direct_graph = sparse(obj.connections.all(:,1),obj.connections.all(:,2),[  obj.connections.distances']);
             
             %h = view(biograph(direct_graph,[],'ShowWeights','on'));
-            
-            obj.digraph_visualization = digraph( [obj.connections.circle(:,1)' obj.connections.translation(:,1)'],[obj.connections.circle(:,2)' obj.connections.translation(:,2)'],[ obj.connections.distances']);
-%             obj.digraph_visualization2 = graph( [obj.connections.circle(:,1)' obj.connections.translation(:,1)'],[obj.connections.circle(:,2)' obj.connections.translation(:,2)'],[ obj.connections.distances']);
-            
-            
-            for i=1:length(obj.connections.all)
-                
-                graphConnectionsLabel(i) = find(obj.connections.all(:,1) == obj.digraph_visualization.Edges.EndNodes(i,1)&obj.connections.all(:,2) == obj.digraph_visualization.Edges.EndNodes(i,2));
-%                 graphConnectionsLabel(i) = find(obj.connections.all(:,1) == obj.digraph_visualization2.Edges.EndNodes(i,1)&obj.connections.all(:,2) == obj.digraph_visualization2.Edges.EndNodes(i,2));
-
-            end
-            
+                        
             % Plot the map on the figure
-%             figure('units','normalized','outerposition',[0 0 1 1])
-%             
-%             obj.plots.graph2 = plot(obj.digraph_visualization,'XData',obj.waypoints(:,1),'YData',-obj.waypoints(:,3),'LineWidth',4,'NodeFontSize',0.5,'ArrowSize',1,'MarkerSize',2.5);
-% %             set(gcf, 'Position', get(0, 'Screensize'))
-%             axis equal
-%             axis([-600 600 -500 500])
-% %             axis off tight
-%             F=getframe(gca);
-%             f=frame2im(F);
-%             figure
-%             imshow(f)
-%             
-%             g = gcf;
-%             exportgraphics(g,'graphMS.png','Resolution',349)
-% %             F=getframe(gca);
-% %             imwrite(F.cdata,'graphMS.png')
-% %             saveas(gcf,'graphMS.png');
-%             image = imread('graphMS.png');
-%             
-%             
-%             grayimage = rgb2gray(image);
-%             bwimage = ~(grayimage < 200 & grayimage >87);
-%             grid1 = binaryOccupancyMap(bwimage,2);
-% %             redmap=binaryOccupancyMap(grid(100:200,100:200),2)
-%             show(grid1)
-%             obj.occMap=grid1
-% %             setOccupancy(grid1,[460 410],1,"local")          
-% %             show(grid1)
-%             assignin('base','mapOc',grid1)
-            figure
-            obj.plots.graph = plot(obj.digraph_visualization,'XData',obj.waypoints(:,1),'YData',-obj.waypoints(:,3),'EdgeLabel',graphConnectionsLabel');
             
-
+            figure('units','normalized','outerposition',[0 0 1 1])
+            generateMapVisualPed(obj,false);
+            
+            
+            
             % Turn off useless properties for performance optimization
             obj.MapFig = gcf;
             obj.MapFig.WindowState ='maximized';
             %MapFig.WindowState ='fullscreen';
-            obj.MapFig.Name = "Mobat";
+            obj.MapFig.Name = "preOcc";
             obj.MapFig.NumberTitle = 'off';
             ax = gca;
             ax.Toolbar = [];
             ax.Interactions = [];
-            view(2)
-            hold on
-            obj.plots.Vehicles = scatter([],[],380,'filled'); % Size of the vehicle bubbles
-            hold off
+%             view(2)
             
-            obj.map2 = evalin('base','mapOc');
-            obj.map3 = copy(obj.map2);
-            obj.fig2 = evalin('base','figOc');
+%             
+%             obj.plots.graph2 = plot(obj.digraph_visualization,'XData',obj.waypoints(:,1),'YData',-obj.waypoints(:,3),'LineWidth',4,'NodeFontSize',0.5,'ArrowSize',1,'MarkerSize',2.5);
+%             set(gcf, 'Position', get(0, 'Screensize'))
+            axis equal
+            axis([-600 600 -500 500])
+%             axis off tight
+            F=getframe(gca);
+            f=frame2im(F);
+            figure
+            imshow(f)
+            
+            g = gcf;
+            exportgraphics(g,'graphMS.png','Resolution',362)
+%             F=getframe(gca);
+%             imwrite(F.cdata,'graphMS.png')
+%             saveas(gcf,'graphMS.png');
+            image = imread('graphMS.png');
             
             
-            obj.initialGraphHighlighting();
-            obj.plots.graph.LineWidth = 2;
-            
+            grayimage = rgb2gray(image);
+            bwimage = ~(grayimage < 200 & grayimage >87);
+            grid1 = binaryOccupancyMap(bwimage,2);
+%             redmap=binaryOccupancyMap(grid(100:200,100:200),2)
+            show(grid1)
+            obj.occFig=gcf
+            obj.occFig.WindowState ='maximized';
+            %MapFig.WindowState ='fullscreen';
+            obj.occFig.Name = "Occ";
+            obj.occFig.NumberTitle = 'off';
+            assignin('base','figOc',obj.occFig)
+            obj.occMap=grid1;
+%             setOccupancy(grid1,[460 410],1,"local")          
+%             show(grid1)
+            assignin('base','mapOc',grid1)
+%             hold on
+%             obj.plots.Vehicles = scatter([],[],380,'filled'); % Size of the vehicle bubbles
+%             hold off
+                        
             obj.crossroads.startingNodes = startingNodes;
             obj.crossroads.breakingNodes = breakingNodes;
             obj.crossroads.stoppingNodes = stoppingNodes;
@@ -265,24 +249,11 @@ classdef Map < handle
             obj.plots.Vehicles.XData = allVehiclePositions(:,1);
             obj.plots.Vehicles.YData = -allVehiclePositions(:,3);
             
-            hold off
-%             figure(obj.fig2)
-            hold on
-            syncWith(obj.map3,obj.map2)
-%             for i=1:10
-%                 A((i-1)*10+1:10*i,1)=(allVehiclePositions(i,1)-5:allVehiclePositions(i,1)+5)'
-%                 A((i-1)*10+1:10*i,2)=(-allVehiclePositions(i,3)-5:-allVehiclePositions(i,3)+5)'
-%             setOccupancy(obj.map3,[A(:,1)+600 A(:,2)+500], ones(100,1))
-            block=ones(17,17);
+            figure(obj.occFig)
+            setOccupancy(obj.occMap,[allVehiclePositions(:,1)+600 -allVehiclePositions(:,3)+500], ones(10,1))
+            show(obj.occMap)
             
-            for i=1:10
-            setOccupancy(obj.map3, [allVehiclePositions(i,1)-4+600 -allVehiclePositions(i,3)-4+500], block, "local");
-            end
-%             show(obj.map2)
-            hold off
             
-            figure(obj.MapFig)
-            hold on
             % Vehicles' Annotation String
             speedArray = compose('%4.1f', [cat(1,cat(1,obj.Vehicles(1:length(obj.Vehicles))).dynamics).speed]);
             nameArray={obj.Vehicles(1:length(obj.Vehicles)).name};
